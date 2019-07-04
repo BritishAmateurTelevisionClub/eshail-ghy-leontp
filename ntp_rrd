@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+
+from leobodnar import *
+
+from os import system 
+from time import sleep, time
+import json
+
+last_hits = 0
+last_ts1 = 0
+last_ts0 = 0
+
+INSTRUMENT_IP = '10.155.155.50'
+
+OVERFLOW_FILE = '.leontp_overflow_count'
+
+OUTPUT_FILE = 'htdocs/ntp_status.json'
+
+def overflow_save(new_overflow_count):
+  try:
+    with open(OVERFLOW_FILE, 'w+') as ovf_file:
+      ovf_file.write(str(new_overflow_count))
+  except Exception as e:
+    print("Failed to write overflow count file: %s" % e)
+
+def overflow_load():
+  load_overflow_count = 0
+  try:
+    with open(OVERFLOW_FILE, 'r') as ovf_file:
+      load_overflow_count = int(ovf_file.read())
+  except Exception as e:
+    load_overflow_count = 0
+    overflow_save(load_overflow_count)
+  return load_overflow_count
+
+overflow_count = overflow_load()
+
+while True:
+  
+  # Try hard to run at the top of every second
+  newtime = int(time()) + 1
+  while int(time()) < newtime:
+    sleep(0.001)
+  
+  stats = leontp_stats(INSTRUMENT_IP)
+  
+  if stats is not None:
+    try:
+      while stats.ref_ts1 == last_ts1:
+        sleep(0.01)
+        stats = leontp_stats(INSTRUMENT_IP)
+
+      # Overflows (need to be manually noted)
+      stats.NTP_served += overflow_count * (2**32)
+
+      if stats.NTP_served < last_hits:
+        overflow_count += 1
+        overflow_save(overflow_count)
+        stats_NTP_served += 2**32
+
+      avg_hits = int((stats.NTP_served - last_hits) / ((stats.ref_ts1 - last_ts1) + (stats.ref_ts0 - last_ts0) / 4294967296.0 ) + 0.5)
+      
+      if (avg_hits > 0) and ((stats.ref_ts1 - last_ts1) < 120):
+        callargs = "rrdtool update ntp1.rrd " + str(last_ts1 - TIME1970) + ":" + str(avg_hits)  # timestamp is beginning of interval 
+        system(callargs)
+  
+      last_hits = stats.NTP_served
+      last_ts1 = stats.ref_ts1
+      last_ts0 = stats.ref_ts0
+  
+    except Exception as e:
+      print(e)
+
+    outputObject = {
+      'ntp-response-datetime': '%s' % stats.timestamp,
+      'ntp-response-timestamp': '%.3f' % (stats.ref_ts1 + stats.ref_ts0),
+      'ntp-requests-total': stats.NTP_served,
+      'ntp-requests-rate': round(stats.NTP_served / stats.uptime, 1),
+      'ntp-requests-overflows': overflow_count,
+      'ntp-gps-uptime-seconds': stats.lock_time,
+      'ntp-gps-uptime-days': round(stats.lock_time / 86400, 1),
+      'ntp-gps-flags': '0x%02x' % stats.flags,
+      'ntp-gps-svs': stats.numSV,
+      'ntp-device-uptime-seconds': stats.uptime,
+      'ntp-device-uptime-days': round(stats.uptime / 86400, 1),
+      'ntp-device-firmware': '%2x.%02x' % (stats.FW_ver>>8, stats.FW_ver&0xFF),
+      'ntp-device-serial': stats.ser_num
+    }
+
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as file_out:
+      json.dump(outputObject, file_out, ensure_ascii=False, indent=2)
