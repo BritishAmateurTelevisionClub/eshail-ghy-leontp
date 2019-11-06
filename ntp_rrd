@@ -75,7 +75,7 @@ while True:
       'ntp-response-datetime': '%s' % stats.timestamp,
       'ntp-response-timestamp': '%.3f' % (stats.ref_ts1 + stats.ref_ts0),
       'ntp-requests-total': stats.NTP_served,
-      'ntp-requests-rate': round(stats.NTP_served / stats.uptime, 1),
+      'ntp-requests-rate': round((stats.NTP_served - (overflow_count * (2**32))) / stats.uptime, 1),
       'ntp-requests-overflows': overflow_count,
       'ntp-gps-uptime-seconds': stats.lock_time,
       'ntp-gps-uptime-days': round(stats.lock_time / 86400, 1),
