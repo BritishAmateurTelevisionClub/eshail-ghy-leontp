@@ -12,28 +12,36 @@ last_ts0 = 0
 
 INSTRUMENT_IP = '10.155.155.50'
 
-OVERFLOW_FILE = '.leontp_overflow_count'
+FILE_FULLCOUNT = '.leontp_full_count'
+
+FILE_DEVICECOUNT = '.leontp_device_count'
+FILE_DEVICEUPTIME = '.leontp_device_uptime'
+FILE_DEVICEOVERFLOWS = '.leontp_device_overflows'
 
 OUTPUT_FILE = 'htdocs/ntp_status.json'
 
-def overflow_save(new_overflow_count):
+def count_save(new_count, _filename):
   try:
-    with open(OVERFLOW_FILE, 'w+') as ovf_file:
-      ovf_file.write(str(new_overflow_count))
+    with open(_filename, 'w+') as count_file:
+      count_file.write(str(new_count))
   except Exception as e:
-    print("Failed to write overflow count file: %s" % e)
+    print("Failed to write count file (%s): %s" % (_filename,e))
 
-def overflow_load():
-  load_overflow_count = 0
+def count_load(_filename):
+  loaded_count = 0
   try:
-    with open(OVERFLOW_FILE, 'r') as ovf_file:
-      load_overflow_count = int(ovf_file.read())
+    with open(_filename, 'r') as count_file:
+      loaded_count = int(count_file.read())
   except Exception as e:
-    load_overflow_count = 0
-    overflow_save(load_overflow_count)
-  return load_overflow_count
+    loaded_count = 0
+    count_save(loaded_count, _filename)
+  return loaded_count
 
-overflow_count = overflow_load()
+full_count = count_load(FILE_FULLCOUNT)
+
+device_count = count_load(FILE_DEVICECOUNT)
+device_uptime = count_load(FILE_DEVICEUPTIME)
+device_overflows = count_load(FILE_DEVICEOVERFLOWS)
 
 while True:
   
@@ -50,13 +58,27 @@ while True:
         sleep(0.01)
         stats = leontp_stats(INSTRUMENT_IP)
 
-      # Overflows (need to be manually noted)
-      stats.NTP_served += overflow_count * (2**32)
+      if(stats.uptime < device_uptime):
+        # Device has rebooted, get new raw device count
+        device_overflows = 0
+        # Put existing device count on full
+        full_count += device_count
+        # Use new raw count on device
+        device_count = stats.NTP_served
+      elif stats.NTP_served < (device_count - (device_overflows * (2**32))):
+        # Device has overflowed
+        device_overflows += 1
+        device_count = stats.NTP_served + (device_overflows * (2**32))
+      else:
+        # Normal increment
+        device_count = stats.NTP_served + (device_overflows * (2**32))
+      
+      device_uptime = stats.uptime
 
-      if stats.NTP_served < last_hits:
-        overflow_count += 1
-        overflow_save(overflow_count)
-        stats_NTP_served += 2**32
+      count_save(full_count, FILE_FULLCOUNT)
+      count_save(device_uptime, FILE_DEVICEUPTIME)
+      count_save(device_count, FILE_DEVICECOUNT)
+      count_save(device_overflows, FILE_DEVICEOVERFLOWS)
 
       avg_hits = int((stats.NTP_served - last_hits) / ((stats.ref_ts1 - last_ts1) + (stats.ref_ts0 - last_ts0) / 4294967296.0 ) + 0.5)
       
@@ -74,11 +96,11 @@ while True:
     outputObject = {
       'ntp-response-datetime': '%s' % stats.timestamp,
       'ntp-response-timestamp': '%.3f' % (stats.ref_ts1 + stats.ref_ts0),
-      'ntp-requests-total': stats.NTP_served,
-      'ntp-requests-rate': round((stats.NTP_served - (overflow_count * (2**32))) / stats.uptime, 1),
-      'ntp-requests-overflows': overflow_count,
+      'ntp-requests-total': (full_count+device_count),
+      'ntp-requests-rate': round(device_count / device_uptime, 1),
       'ntp-gps-uptime-seconds': stats.lock_time,
       'ntp-gps-uptime-days': round(stats.lock_time / 86400, 1),
+      'ntp-requests-device': device_count,
       'ntp-gps-flags': '0x%02x' % stats.flags,
       'ntp-gps-svs': stats.numSV,
       'ntp-device-uptime-seconds': stats.uptime,

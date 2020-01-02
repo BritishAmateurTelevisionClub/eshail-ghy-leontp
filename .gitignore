@@ -2,5 +2,8 @@
 *.png
 *.rrd
 __pycache__/
-.leontp_overflow_count
+.leontp_full_count
+.leontp_device_count
+.leontp_device_uptime
+.leontp_device_overflows
 ntp_status.json
