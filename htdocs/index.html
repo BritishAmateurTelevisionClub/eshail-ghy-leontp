@@ -5,38 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Public NTP Server</title>
 <link href="lib/bootstrap-4.4.1/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    body {
-        font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,"Noto Sans",sans-serif;
-        margin-left: 25px;
-        margin-right: 25px;
-      }
-      #logo-row {
-        margin-top: 10px;
-        margin-bottom: 20px;
-        height: 75px;
-      }
-      #logo-row > div {
-        height: 100%;
-        padding-left: 0px;
-        padding-right: 0px;
-        vertical-align: middle;
-      }
-      .logo {
-        max-height: 100%;
-        max-width: 85%;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }
-#ntp-status {
-  white-space: pre;
-}
-</style>
+<link href="index.css" rel="stylesheet">
 <script src="lib/jquery-3.4.1.min.js"></script>
 <script src="lib/bootstrap-4.4.1/js/bootstrap.min.js"></script>
 <script src="index.js"></script>
@@ -60,52 +29,55 @@
       </div>
     </div>
 
-<a href="ntp_rack.jpg" target="_blank"><img src="ntp_rack.jpg" alt="LeoNTP Server in rack at Goonhilly" style="float:right;width:25%;"></a>
-<h3>Public NTP Server Statistics</h3>
-NTP response: <span id="ntp-response-datetime"></span> (<span id="ntp-response-timestamp"></span>)<br>
-Total NTP requests served: <span id="ntp-requests-total"></span><br>
-Average load since restart: ~<span id="ntp-requests-rate"></span> requests per second<br>
-Uptime: <span id="ntp-device-uptime-seconds"></span> seconds ( <span id="ntp-device-uptime-days"></span> days )<br>
-GPS lock since: <span id="ntp-gps-uptime-seconds"></span> seconds ( <span id="ntp-gps-uptime-days"></span> days )<br>
-NTP requests served since reboot: <span id="ntp-requests-device"></span><br>
-GPS flags: <span id="ntp-gps-flags"></span><br>
-Active satellites: <span id="ntp-gps-svs"></span><br>
-Firmware version: <span id="ntp-device-firmware"></span><br>
-Serial number: <span id="ntp-device-serial"></span><br>
-<br>
-<ul>
-<li>Hardware: <a href="http://store.uputronics.com/index.php?route=product/product&product_id=92" target="_blank">LeoNTP GPS Network Master Clock</a></li>
-<li>NTP Pool (Global, Europe, UK): <a href="http://www.pool.ntp.org/scores/185.83.169.27" target="_blank">185.83.169.27</a></li>
-</ul>
-<br>	
+<h3>Stratum 1 NTP Server Load Statistics</h3>
+<div id="description-row" class="row" style="margin-bottom: 1em;">
+  <div class="col-md-6">
+    <span style="display: inline-block;margin-top: 8px;margin-bottom: 8px;margin-left:10px;">Public IPv4 Address: <i>185.83.169.27</i> / <i>eshail.batc.org.uk</i></span><br>
+    NTP response: <span id="ntp-response-datetime"></span> (<span id="ntp-response-timestamp"></span>)<br>
+    Total NTP requests served: <span id="ntp-requests-total"></span><br>
+    Average load: <span id="ntp-requests-rate"></span> requests per second<br>
+    Uptime: <span id="ntp-device-uptime-seconds"></span> seconds ( <span id="ntp-device-uptime-days"></span> days )<br>
+    GPS lock since: <span id="ntp-gps-uptime-seconds"></span> seconds ( <span id="ntp-gps-uptime-days"></span> days )<br>
+    NTP requests served since reboot: <span id="ntp-requests-device"></span><br>
+    GPS SVs in use: <span id="ntp-gps-svs"></span><br>
+    GPS Status flags: <span id="ntp-gps-flags"></span><br>
+    Firmware version: <span id="ntp-device-firmware"></span><br>
+    Serial number: <span id="ntp-device-serial"></span><br>
+    <ul style="margin-top: 8px;">
+      <li>Hardware: <a href="http://store.uputronics.com/index.php?route=product/product&product_id=92" target="_blank">LeoNTP GPS Network Master Clock</a></li>
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <a href="ntp_rack.jpg" target="_blank"><img src="ntp_rack.jpg" alt="LeoNTP Server in rack at Goonhilly" style="float:right;width:42%;"></a>
+    <a href="https://www.pool.ntp.org/scores/185.83.169.27" target="_blank">
+      <span id="ntp-pool-score-title">NTP Pool Service<br>(Global, Europe, UK)</span>
+      <img id="img-ntppool" src="https://www.ntppool.org/graph/185.83.169.27/offset.png" alt="Server offset graph" style="width:55%;">
+    </a>
+  </div>
+</div>
 20 minutes traffic, 1 second average:<br>
-<img id="img-20m" border="0" alt="20 min" src="20m.png"  height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-20m" class="ntp-rrd-img" alt="20 min" src="20m.png"><br>
 
 2 hours traffic, 1 second average:<br>
-<img id="img-2h" border="0" alt="2 hours" src="2h.png"  height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-2h" class="ntp-rrd-img" alt="2 hours" src="2h.png"><br>
 
 12 hours traffic, 1 second average:<br>
-<img id="img-12h" border="0" alt="12 hours" src="12h.png"  height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-12h" class="ntp-rrd-img" alt="12 hours" src="12h.png"><br>
 
 2 days traffic, 1 second average:<br>
-<img id="img-2d" border="0" alt="2 days" src="48h.png" height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-2d" class="ntp-rrd-img" alt="2 days" src="48h.png"><br>
 
 10 days traffic, 1 second average:<br>
-<img id="img-10d" border="0" alt="10 days" src="10d.png" height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-10d" class="ntp-rrd-img" alt="10 days" src="10d.png"><br>
 
 1 month traffic, 1 hour average:<br>
-<img id="img-1mo" border="0" alt="1 month" src="30d.png" height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br><br>
+<img id="img-1mo" class="ntp-rrd-img" alt="1 month" src="30d.png"><br>
 
 1 year traffic, 1 day average:<br>
-<img id="img-1y" border="0" alt="1 year" src="1y.png"  height="291" width="1257" style="margin-bottom:.25em;vertical-align:middle;">
-<br>	
-
-<img id="img-ntppool" src="https://www.ntppool.org/graph/185.83.169.27/offset.png" alt="Server offset graph" height="116" width="250">
+<img id="img-1y" class="ntp-rrd-img" alt="1 year" src="1y.png"><br>
+<hr>
+<footer class="my-4 pt-1 text-muted text-center text-small">
+  <p class="mb-1">&copy; 2019 Goonhilly Web Receivers Project, provided by BATC and AMSAT-UK, hosted by Goonhilly Earth Station.</p>
+</footer>
 </body>
 </html>

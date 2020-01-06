@@ -1,4 +1,13 @@
 var ntp_status_spans = {};
+
+var ntp_20m_img;
+var ntp_2h_img;
+var ntp_12h_img;
+var ntp_2d_img;
+var ntp_10d_img;
+var ntp_30d_img;
+var ntp_pool_img;
+
 function update_ntp_fields(status)
 {
   for (var status_field in status)
@@ -42,16 +51,18 @@ $(function() {
     'ntp-device-serial': $('#ntp-device-serial'),
     'ntp-device-firmware': $('#ntp-device-firmware'),
   };
+
   update_ntp_status();
+
+  ntp_20m_img = document.getElementById("img-20m");
+  ntp_2h_img = document.getElementById("img-2h");
+  ntp_12h_img = document.getElementById("img-12h");
+  ntp_2d_img = document.getElementById("img-2d");
+  ntp_10d_img = document.getElementById("img-10d");
+  ntp_30d_img = document.getElementById("img-1mo");
+  ntp_pool_img = document.getElementById("img-ntppool");
 });
 
-var ntp_20m_img = document.getElementById("img-20m");
-var ntp_2h_img = document.getElementById("img-2h");
-var ntp_12h_img = document.getElementById("img-12h");
-var ntp_2d_img = document.getElementById("img-2d");
-var ntp_10d_img = document.getElementById("img-10d");
-var ntp_30d_img = document.getElementById("img-1mo");
-var ntp_pool_img = document.getElementById("img-ntppool");
 function update_rrd_images()
 {
   var cacheBuster = new Date().getTime();
